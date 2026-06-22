@@ -38,4 +38,5 @@ jobs:
           context: ./app/frontend
           push: true
           tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/taskops-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/taskops-frontend:${{ github.sha }}

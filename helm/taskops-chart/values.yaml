@@ -15,7 +15,7 @@ backend:
     DB_PASSWORD: password
 
 frontend:
-  replicaCount: 3
+  replicaCount: 2
   image:
     repository: xpocky/taskops-frontend
     tag: latest

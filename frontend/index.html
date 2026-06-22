@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>TaskOps DevOps Capstone</title>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">DevOps Capstone Project</p>
+        <h1>TaskOps</h1>
+        <p class="subtitle">
+          A simple task tracker used to learn Docker, CI/CD, Terraform,
+          Ansible, Kubernetes, Helm, ArgoCD, Prometheus, and Grafana.
+        </p>
+      </div>
+
+      <div class="status-card">
+        <span class="status-dot"></span>
+        <div>
+          <strong id="api-status">Checking API...</strong>
+          <p>Backend health status</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="api-config">
+      <label for="api-url">Backend API URL</label>
+      <div class="api-row">
+        <input
+          id="api-url"
+          type="text"
+          placeholder="http://localhost:5000"
+        />
+        <button id="save-api-url">Save</button>
+      </div>
+      <small>
+        For local testing use http://localhost:5000. Later Docker/Kubernetes can use a different API URL.
+      </small>
+    </section>
+
+    <section class="task-form-section">
+      <h2>Add deployment task</h2>
+
+      <form id="task-form" class="task-form">
+        <input
+          id="task-title"
+          type="text"
+          placeholder="Task title"
+          required
+        />
+
+        <textarea
+          id="task-description"
+          placeholder="Task description"
+          rows="3"
+        ></textarea>
+
+        <select id="task-status">
+          <option value="todo">To do</option>
+          <option value="in_progress">In progress</option>
+          <option value="done">Done</option>
+        </select>
+
+        <button type="submit">Add task</button>
+      </form>
+    </section>
+
+    <section class="task-list-section">
+      <div class="section-header">
+        <h2>Deployment tasks</h2>
+        <button id="refresh-btn">Refresh</button>
+      </div>
+
+      <div id="task-list" class="task-list">
+        <p class="empty">Loading tasks...</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

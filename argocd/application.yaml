@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: taskops
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/PrabalPiya/simple-devops-projects--all.git
+    targetRevision: main
+    path: helm/taskops-chart
+    helm:
+      releaseName: taskops
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: taskops
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

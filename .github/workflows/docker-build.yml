@@ -30,6 +30,7 @@ jobs:
           context: ./app/backend
           push: true
           tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/taskops-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/taskops-backend:${{ github.sha }}
 
       - name: Build and push frontend image

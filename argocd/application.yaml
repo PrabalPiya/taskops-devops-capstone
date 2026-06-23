@@ -7,7 +7,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/PrabalPiya/taskops-devops-capstone.git
+    repoURL: https://github.com/PrabalPiya/simple-taskops-devops-capstone.git
     targetRevision: main
     path: helm/taskops-chart
     helm:

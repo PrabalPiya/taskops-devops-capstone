@@ -8,4 +8,7 @@ prometheus:
               - backend.taskops.svc.cluster.local:5000
 
 grafana:
-  adminPassword: admin
+  adminPassword: "TaskOpsAdmin123"
+
+  service:
+    type: LoadBalancer

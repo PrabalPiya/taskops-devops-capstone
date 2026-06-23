@@ -74,32 +74,6 @@ module "vpc" {
   tags = local.tags
 }
 
-resource "aws_security_group" "node_ssh" {
-  count = var.enable_node_ssh ? 1 : 0
-
-  name        = "${var.project_name}-node-ssh-sg"
-  description = "Allow SSH access to EKS worker nodes"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    description = "SSH from allowed CIDR only"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.allowed_ssh_cidr]
-  }
-
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = local.tags
-}
-
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
@@ -141,12 +115,7 @@ module "eks" {
         max_size     = var.node_max_size
         desired_size = var.node_desired_size
       },
-      var.enable_node_ssh ? {
-        remote_access = {
-          ec2_ssh_key               = var.existing_key_pair_name
-          source_security_group_ids = [aws_security_group.node_ssh[0].id]
-        }
-      } : {}
+      
     )
   }
 

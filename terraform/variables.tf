@@ -40,24 +40,6 @@ variable "node_desired_size" {
   default     = 2
 }
 
-variable "enable_node_ssh" {
-  description = "Enable SSH access to EKS worker nodes using an existing AWS key pair"
-  type        = bool
-  default     = false
-}
-
-variable "existing_key_pair_name" {
-  description = "Existing AWS EC2 key pair name. This is the key pair linked to your .pem file."
-  type        = string
-  default     = ""
-}
-
-variable "allowed_ssh_cidr" {
-  description = "CIDR allowed to SSH into worker nodes. Use YOUR_PUBLIC_IP/32."
-  type        = string
-  default     = "0.0.0.0/0"
-}
-
 variable "node_subnet_type" {
   description = "Use private for normal EKS nodes. Use public only if you want direct SSH into worker nodes."
   type        = string

@@ -1,5 +1,5 @@
 frontend:
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: 443845329055.dkr.ecr.ap-south-1.amazonaws.com/taskops-frontend
     tag: latest
@@ -10,7 +10,7 @@ frontend:
     targetPort: 80
 
 backend:
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: 443845329055.dkr.ecr.ap-south-1.amazonaws.com/taskops-backend
     tag: latest

@@ -515,12 +515,10 @@ This panel confirms that Prometheus is successfully scraping the TaskOps backend
 
 The project currently uses the `latest` image tag in the Helm values file.
 
-This works for basic deployment, but for a stronger GitOps workflow, the recommended improvement is to make GitHub Actions update the Helm image tag to the Git commit SHA after pushing the image.
+This works for basic deployment, but for a stronger GitOps workflow, GitHub Actions should update the Helm image tag to the Git commit SHA after pushing the image.
 
 ---
 
 ## Project Summary
 
 TaskOps demonstrates a complete DevOps deployment pipeline using modern cloud-native tools. The project provisions AWS infrastructure with Terraform, builds and pushes Docker images using GitHub Actions, deploys the application to Amazon EKS through Argo CD and Helm, and monitors the application using Prometheus and Grafana.
-
-This project shows practical experience with infrastructure automation, containerization, Kubernetes deployment, GitOps, CI/CD, and observability.

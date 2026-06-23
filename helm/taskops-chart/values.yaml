@@ -1,7 +1,18 @@
+frontend:
+  replicaCount: 2
+  image:
+    repository: 443845329055.dkr.ecr.ap-south-1.amazonaws.com/taskops-frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 80
+
 backend:
   replicaCount: 2
   image:
-    repository: xpocky/taskops-backend
+    repository: 443845329055.dkr.ecr.ap-south-1.amazonaws.com/taskops-backend
     tag: latest
     pullPolicy: Always
   service:
@@ -13,16 +24,6 @@ backend:
     DB_NAME: taskops
     DB_USER: root
     DB_PASSWORD: password
-
-frontend:
-  replicaCount: 2
-  image:
-    repository: xpocky/taskops-frontend
-    tag: latest
-    pullPolicy: Always
-  service:
-    port: 80
-    nodePort: 30080
 
 mysql:
   image:

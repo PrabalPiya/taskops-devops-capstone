@@ -23,4 +23,9 @@ Thumbs.db
 *.tfstate.*
 terraform.tfvars
 tfplan
+crash.log
+crash.*.log
+
+# Keys
 *.pem
+*.key

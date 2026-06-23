@@ -1,19 +1,31 @@
-output "ssh_command" {
-  description = "SSH command to connect to the EC2 instance"
-  value       = "ssh -i your-key.pem ec2-user@${aws_instance.app_server.public_ip}"
+output "aws_account_id" {
+  description = "AWS account ID"
+  value       = data.aws_caller_identity.current.account_id
 }
 
-output "frontend_url" {
-  description = "Frontend URL after Docker Compose deployment"
-  value       = "http://${aws_instance.app_server.public_ip}:8080"
+output "aws_region" {
+  description = "AWS region"
+  value       = var.aws_region
 }
 
-output "prometheus_url" {
-  description = "Prometheus URL if deployed on EC2"
-  value       = "http://${aws_instance.app_server.public_ip}:9090"
+output "cluster_name" {
+  description = "EKS cluster name"
+  value       = module.eks.cluster_name
 }
 
-output "grafana_url" {
-  description = "Grafana URL if deployed on EC2"
-  value       = "http://${aws_instance.app_server.public_ip}:3001"
+output "cluster_endpoint" {
+  description = "EKS cluster endpoint"
+  value       = module.eks.cluster_endpoint
 }
+
+output "backend_ecr_repository_url" {
+  description = "Backend ECR repository URL"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
+output "frontend_ecr_repository_url" {
+  description = "Frontend ECR repository URL"
+  value       = aws_ecr_repository.frontend.repository_url
+}
+
+

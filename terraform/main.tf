@@ -2,117 +2,91 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["137112412989"]
+data "aws_caller_identity" "current" {}
 
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-resource "aws_vpc" "main" {
-  cidr_block           = "10.20.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+locals {
+  cluster_name = "${var.project_name}-eks"
 
   tags = {
-    Name = "${var.project_name}-vpc"
+    Project   = var.project_name
+    ManagedBy = "Terraform"
   }
 }
 
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.20.1.0/24"
-  availability_zone       = data.aws_availability_zones.available.names[0]
+resource "aws_ecr_repository" "backend" {
+  name                 = "${var.project_name}-backend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = local.tags
+}
+
+resource "aws_ecr_repository" "frontend" {
+  name                 = "${var.project_name}-frontend"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = local.tags
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 6.0"
+
+  name = "${var.project_name}-vpc"
+  cidr = "10.30.0.0/16"
+
+  azs = slice(data.aws_availability_zones.available.names, 0, 2)
+
+  public_subnets = [
+    "10.30.1.0/24",
+    "10.30.2.0/24"
+  ]
+
+  private_subnets = [
+    "10.30.11.0/24",
+    "10.30.12.0/24"
+  ]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
   map_public_ip_on_launch = true
 
-  tags = {
-    Name = "${var.project_name}-public-subnet"
+  public_subnet_tags = {
+    "kubernetes.io/role/elb"                      = "1"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
-}
 
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "${var.project_name}-igw"
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb"             = "1"
+    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
+
+  tags = local.tags
 }
 
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+resource "aws_security_group" "node_ssh" {
+  count = var.enable_node_ssh ? 1 : 0
 
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
-}
-
-resource "aws_route" "internet_access" {
-  route_table_id         = aws_route_table.public.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.main.id
-}
-
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_security_group" "app" {
-  name        = "${var.project_name}-sg"
-  description = "Security group for TaskOps EC2 instance"
-  vpc_id      = aws_vpc.main.id
+  name        = "${var.project_name}-node-ssh-sg"
+  description = "Allow SSH access to EKS worker nodes"
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
-    description = "SSH access"
+    description = "SSH from allowed CIDR only"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.allowed_ssh_cidr]
-  }
-
-  ingress {
-    description = "TaskOps frontend"
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "TaskOps backend API"
-    from_port   = 5000
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Prometheus"
-    from_port   = 9090
-    to_port     = 9090
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Grafana"
-    from_port   = 3001
-    to_port     = 3001
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -123,20 +97,58 @@ resource "aws_security_group" "app" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.project_name}-sg"
-  }
+  tags = local.tags
 }
 
-resource "aws_instance" "app_server" {
-  ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = var.instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.app.id]
-  key_name                    = var.ssh_key
-  associate_public_ip_address = true
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
 
-  tags = {
-    Name = "${var.project_name}-app-server"
+  name               = local.cluster_name
+  kubernetes_version = var.cluster_version
+
+  endpoint_public_access = true
+
+  enable_cluster_creator_admin_permissions = true
+
+  vpc_id = module.vpc.vpc_id
+
+  subnet_ids = var.node_subnet_type == "public" ? module.vpc.public_subnets : module.vpc.private_subnets
+
+  addons = {
+    coredns = {}
+
+    kube-proxy = {}
+
+    vpc-cni = {
+      before_compute = true
+    }
+
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
   }
+
+  eks_managed_node_groups = {
+    taskops_nodes = merge(
+      {
+        name = "${var.project_name}-nodes"
+
+        ami_type       = "AL2023_x86_64_STANDARD"
+        instance_types = var.node_instance_types
+
+        min_size     = var.node_min_size
+        max_size     = var.node_max_size
+        desired_size = var.node_desired_size
+      },
+      var.enable_node_ssh ? {
+        remote_access = {
+          ec2_ssh_key               = var.existing_key_pair_name
+          source_security_group_ids = [aws_security_group.node_ssh[0].id]
+        }
+      } : {}
+    )
+  }
+
+  tags = local.tags
 }
